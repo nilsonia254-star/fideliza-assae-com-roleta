@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Gestão - Assaê Grill e Gula</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background-color: #0A0A0A; color: #FFFFFF; padding: 12px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+        .dashboard-container { width: 100%; max-width: 950px; background: #14161d; border-radius: 16px; padding: 18px; border: 1px solid #232733; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin: 0 auto; }
+        .header-title { color: #ff5722; font-size: 20px; margin-bottom: 16px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; text-align: center; }
+        .counter-badge { background: #1a1d26; border: 1px solid #ff5722; color: #ff9800; font-size: 12px; padding: 5px 10px; border-radius: 20px; margin: 0 auto; }
+        
+        .quick-preview-box { background: linear-gradient(135deg, #1a1d26 0%, #101217 100%); border: 2px solid #ff5722; border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 0 15px rgba(255, 87, 34, 0.15); text-align: left; }
+        .preview-title { color: #ff5722; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+        .preview-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .preview-name { font-size: 15px; font-weight: bold; color: #ffffff; }
+        .preview-details { font-size: 12px; color: #a0a6b8; display: flex; gap: 12px; flex-wrap: wrap; }
+        .preview-highlight { color: #ff9800; font-weight: bold; }
+        .preview-dates { font-size: 11px; color: #00d2d3; margin-top: 6px; font-weight: 600; border-top: 1px solid #232733; padding-top: 5px; }
+        .preview-finance { margin-top: 6px; font-size: 12px; color: #ff9800; font-weight: bold; border-top: 1px solid #232733; padding-top: 5px; }
+
+        .chart-box { background: #1a1d26; border: 1px solid #2a2e3d; border-radius: 12px; padding: 14px; margin-top: 20px; margin-bottom: 20px; height: 260px; position: relative; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .chart-toggle-btn { background: #101217; border: 1px solid #2a2e3d; color: #a0a6b8; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        .chart-toggle-btn.active { background: #ff5722; color: #ffffff; font-weight: bold; border-color: #ff5722; }
+        
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
+        
+        .section-title { color: #ff5722; font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+        label { display: block; font-size: 11px; color: #a0a6b8; margin-bottom: 3px; margin-top: 6px; }
+        input, select, textarea { width: 100%; padding: 9px 11px; border-radius: 8px; background: #101217; border: 1px solid #2a2e3d; color: #ffffff; font-size: 13px; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: #ff5722; }
+        
+        .search-input-box { border: 2px solid #00A8E8; background: #101217; font-weight: bold; color: #00A8E8; }
+        
+        .btn-group { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+        .btn { border: none; border-radius: 8px; padding: 10px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-orange { background: linear-gradient(135deg, #ff9800, #ff5722); color: #ffffff; flex: 1; min-width: 100px; }
+        .btn-cyan { background: #00d2d3; color: #101217; flex: 1; min-width: 70px; }
+        .btn-coral { background: #ff6b6b; color: #ffffff; flex: 1; min-width: 70px; }
+        .btn-green { background: #00C853; color: #ffffff; width: 100%; }
+        .btn-excel { background: #107c41; color: #ffffff; padding: 8px 12px; font-size: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .btn-import { background: #8e44ad; color: #ffffff; padding: 8px 12px; font-size: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .btn-red { background: #ee5253; color: #ffffff; flex: 1; }
+        .btn-blue { background: #00A8E8; color: #ffffff; width: 100%; margin-top: 10px; padding: 12px; font-size: 13px; }
+        
+        .table-section { margin-top: 20px; border-top: 1px solid #232733; padding-top: 16px; overflow-x: auto; width: 100%; }
+        .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 750px; }
+        th, td { padding: 9px; text-align: left; border-bottom: 1px solid #232733; }
+        th { color: #a0a6b8; font-weight: 600; }
+        .btn-notes { background: #f39c12; color: #ffffff; padding: 4px 8px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .badge-ref { background: #0088ff22; color: #0088ff; padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid #0088ff44; }
+        .badge-dates { background: #00d2d322; color: #00d2d3; padding: 3px 6px; border-radius: 6px; font-weight: bold; border: 1px solid #00d2d344; font-size: 10px; line-height: 1.4; display: inline-block; }
+        .badge-expired { background: #ee525322; color: #ff6b6b; padding: 3px 6px; border-radius: 6px; font-weight: bold; border: 1px solid #ee525344; font-size: 10px; }
+
+        /* Roleta da Sorte */
+        .roulette-box { background: #1a1d26; border: 1px solid #ff5722; border-radius: 12px; padding: 12px; margin-top: 14px; }
+        .roulette-status { font-size: 12px; color: #a0a6b8; line-height: 1.5; margin: 6px 0 4px 0; }
+        .roulette-status b { color: #ff9800; }
+        .roulette-code { background: #101217; border: 1px dashed #ff9800; color: #ff9800; padding: 1px 8px; border-radius: 6px; font-weight: bold; letter-spacing: 1px; }
+
+        /* Tela de bloqueio por inadimplência da licença */
+        #blockScreen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0A0A0A; z-index: 9999; justify-content: center; align-items: center; padding: 20px; text-align: center; }
+        .block-card { background: #14161d; border: 2px solid #ee5253; border-radius: 16px; padding: 30px; max-width: 450px; box-shadow: 0 10px 40px rgba(238, 82, 83, 0.3); }
+        .block-card h2 { color: #ee5253; font-size: 22px; margin-bottom: 12px; }
+        .block-card p { color: #a0a6b8; font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <!-- Tela de bloqueio caso o serviço não esteja pago -->
+    <div id="blockScreen">
+        <div class="block-card">
+            <h2>⚠️ Acesso Suspenso</h2>
+            <p>O acesso a este painel administrativo foi temporariamente suspenso por pendência na regularização do serviço de suporte técnico. Entre em contato com o desenvolvedor para restabelecer o sistema.</p>
+            <div style="font-size: 11px; color: #ff9800; font-weight: bold;">Status: Aguardando regularização</div>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="header-title">
+            <span>🔥 Gestão - Assaê Grill e Gula</span>
+            <div class="counter-badge">Total de Clientes: <span id="totalClientsCount">1</span></div>
+        </div>
+
+        <div class="quick-preview-box">
+            <div class="preview-title">
+                <span>⭐ Cliente Selecionada em Destaque</span>
+                <span id="previewId" style="color: #a0a6b8;">AG-1001</span>
+            </div>
+            <div class="preview-content">
+                <div>
+                    <div class="preview-name" id="previewName">Carregando...</div>
+                    <div style="font-size: 11px; color: #00d2d3; margin-top: 2px;" id="previewPhone">-</div>
+                </div>
+                <div class="preview-details">
+                    <div>Pontos: <span class="preview-highlight" id="previewPoints">0 pts</span></div>
+                </div>
+            </div>
+            <div class="preview-dates" id="previewDatesText">
+                📅 Atualizado em: --/--/---- | Válido até: --/--/---- (⏳ -- dias restantes)
+            </div>
+            <div class="preview-finance" id="previewFinance">
+                💰 Financeiro: -
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            <div>
+                <div class="section-title">Gerenciar Cliente</div>
+                <button class="btn btn-orange" onclick="addNewClientPrompt()" style="width: 100%; margin-bottom: 10px; font-size: 13px; padding: 11px;">➕ Cadastrar Novo Cliente Aqui</button>
+                
+                <label for="searchClientInput" style="color: #00A8E8; font-weight: bold;">🔍 Digite o Nome para Achar Rápido:</label>
+                <input type="text" id="searchClientInput" class="search-input-box" placeholder="Ex: Carlos, Ana..." oninput="filterClientByName()">
+
+                <label for="selectClient" style="margin-top: 8px;">Ou Selecionar na Lista:</label>
+                <select id="selectClient" onchange="loadClientFromSelect()"><option value="">-- Selecione um cliente --</option></select>
+                
+                <label for="clientId">ID do Cliente:</label>
+                <input type="text" id="clientId" value="AG-1001" readonly>
+                
+                <label for="clientName">Nome Completo do Cliente:</label>
+                <input type="text" id="clientName" placeholder="Nome do cliente">
+                
+                <label for="clientPhone">WhatsApp com DDD:</label>
+                <input type="text" id="clientPhone" placeholder="11984159811">
+                
+                <label for="referredBy">Indicado por:</label>
+                <input type="text" id="referredBy" placeholder="Ex: Direto ou [AG-1001]">
+                
+                <label for="clientFinanceNotes" style="color: #ff9800; font-weight: bold;">💰 Anotações Financeiras:</label>
+                <textarea id="clientFinanceNotes" rows="2" placeholder="Ex: Pix pago / Pedido reservado para domingo..."></textarea>
+                
+                <label for="clientNotes">📝 Observações Gerais / Pedidos:</label>
+                <textarea id="clientNotes" rows="2" placeholder="Ex: Prefere o frango bem assado..."></textarea>
+                
+                <div class="btn-group" style="margin-top: 12px;">
+                    <button class="btn btn-green" onclick="saveClient()">💾 Salvar / Atualizar</button>
+                    <button class="btn btn-red" onclick="deleteClient()">🗑️ Eliminar</button>
+                </div>
+            </div>
+            
+            <div>
+                <div class="section-title">Lançar Pontos & Validade do Cartão</div>
+                <label>Adicionar Pontos:</label>
+                <div class="btn-group">
+                    <button class="btn btn-orange" onclick="addPoints(1)">+ 1 Ponto</button>
+                    <button class="btn btn-orange" onclick="addPoints(3)">+ 3 Pontos</button>
+                    <button class="btn btn-orange" onclick="addPoints(5)">+ 5 Pontos</button>
+                </div>
+                
+                <label style="margin-top: 12px;">Ajustar Dias de Validade do Cartão:</label>
+                <div class="btn-group">
+                    <button class="btn btn-cyan" onclick="adjustDays(1)">+ 1 Dia</button>
+                    <button class="btn btn-cyan" onclick="adjustDays(10)">+ 10 Dias</button>
+                    <button class="btn btn-coral" onclick="adjustDays(-1)">- 1 Dia</button>
+                    <button class="btn btn-coral" onclick="adjustDays(-10)">- 10 Dias</button>
+                </div>
+                
+                <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+                    <input type="number" id="validityDays" value="60" style="text-align: center; font-weight: bold; font-size: 14px;">
+                    <button class="btn btn-orange" style="width: auto; padding: 10px;" onclick="saveValidityDays()">Fixar</button>
+                </div>
+                
+                <label style="margin-top: 12px; color: #ff6b6b;">Correção de Pontos:</label>
+                <div class="btn-group">
+                    <button class="btn btn-coral" onclick="addPoints(-1)">- 1 Ponto</button>
+                    <button class="btn btn-coral" onclick="resetPoints()">🔄 Zerar</button>
+                </div>
+                
+                <div class="roulette-box">
+                    <div class="section-title" style="margin-bottom: 0;">🎰 Roleta da Sorte</div>
+                    <div class="roulette-status" id="rouletteStatus">Nenhum giro liberado para este cliente.</div>
+                    <div class="btn-group">
+                        <button class="btn btn-orange" onclick="grantSpin()">🎰 Liberar 1 Giro</button>
+                        <button class="btn btn-cyan" onclick="confirmPrize()">✅ Dar Baixa no Prêmio</button>
+                        <button class="btn btn-coral" onclick="cancelSpin()">✖ Cancelar Giro</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-blue" onclick="sendWhatsApp()">📲 Enviar Cartão para WhatsApp do Cliente</button>
+                
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <span style="font-size: 12px; font-weight: bold; color: #ff9800;">📊 Atendimentos por Período</span>
+                        <div>
+                            <button id="btnMonthly" class="chart-toggle-btn active" onclick="switchChart('monthly')">Mensal</button>
+                            <button id="btnYearly" class="chart-toggle-btn" onclick="switchChart('yearly')">Anual</button>
+                        </div>
+                    </div>
+                    <div style="height: 190px;"><canvas id="attendanceChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header-row">
+                <div class="section-title" style="margin-bottom: 0;">Lista de Clientes Cadastrados</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="display:none" onchange="importFromExcel(event)">
+                    <button class="btn btn-import" onclick="document.getElementById('excelFile').click()">📂 Importar XLSX</button>
+                    <button class="btn btn-excel" onclick="exportToExcelXLSX()">📊 Baixar Excel (.XLSX)</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Nome</th><th>WhatsApp</th><th>Indicada Por</th><th>Pontos</th><th>Validade e Dias Restantes</th><th>Financeiro</th><th>Ação</th></tr>
+                </thead>
+                <tbody id="clientTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO DA URL DO GOOGLE APPS SCRIPT (Cole a URL do Apps Script aqui quando criar a planilha do Assaê)
+        const GOOGLE_SCRIPT_URL = ""; 
+
+        let savedClients = localStorage.getItem('assae_clients_list');
+        let clientsList = savedClients ? JSON.parse(savedClients) : [
+            { id: "AG-1001", name: "Cliente Exemplo", phone: "11984159811", ref: "Direto", points: 5, days: 60, lastUpdate: new Date().toISOString(), finance: "Pago", notes: "Gosta de combo família" }
+        ];
+
+        // VERIFICAÇÃO DE LICENÇA / BLOQUEIO REMOTO
+        async function checkLicenseStatus() {
+            if (!GOOGLE_SCRIPT_URL) return; // Se não configurado ainda, deixa rodando local
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?action=checkLicense");
+                const result = await response.json();
+                if (result.status === "BLOQUEADO") {
+                    document.getElementById('blockScreen').style.display = 'flex';
+                } else {
+                    document.getElementById('blockScreen').style.display = 'none';
+                    syncWithGoogleSheets(); // Sincroniza dados se ativo
+                }
+            } catch (e) {
+                console.log("Modo offline / erro na licença:", e);
+            }
+        }
+
+        // SINCRONIZAÇÃO COM O GOOGLE SHEETS
+        function syncWithGoogleSheets() {
+            if (!GOOGLE_SCRIPT_URL) return;
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(clientsList)
+            }).catch(err => console.log("Erro ao sincronizar nuvem:", err));
+        }
+
+        function persistData() {
+            localStorage.setItem('assae_clients_list', JSON.stringify(clientsList));
+            updateChartData();
+            syncWithGoogleSheets();
+        }
+
+        function formatDate(dateObj) {
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function getClientCardDates(client) {
+            let updateDate = client.lastUpdate ? new Date(client.lastUpdate) : new Date();
+            if (isNaN(updateDate.getTime()) || updateDate.getFullYear() > 2030 || updateDate.getFullYear() < 2024) {
+                updateDate = new Date();
+            }
+            let validityDays = parseInt(client.days) || 60;
+            let expiryDate = new Date(updateDate.getTime() + (validityDays * 24 * 60 * 60 * 1000));
+            const today = new Date();
+            const diffTime = expiryDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            return {
+                updatedFormatted: formatDate(updateDate),
+                expiryFormatted: formatDate(expiryDate),
+                daysLeft: diffDays
+            };
+        }
+
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        const attendanceChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Atendimentos', data: [], backgroundColor: 'rgba(255, 152, 0, 0.8)', borderColor: '#ff5722', borderWidth: 1, borderRadius: 6 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#a0a6b8', font: {size: 9} }, grid: { color: '#232733' } }, y: { ticks: { color: '#a0a6b8', beginAtZero: true, stepSize: 5, font: {size: 9} }, grid: { color: '#232733' } } } }
+        });
+
+        let currentChartMode = 'monthly';
+        function switchChart(mode) {
+            currentChartMode = mode;
+            if(mode === 'monthly') {
+                document.getElementById('btnMonthly').classList.add('active');
+                document.getElementById('btnYearly').classList.remove('active');
+            } else {
+                document.getElementById('btnYearly').classList.add('active');
+                document.getElementById('btnMonthly').classList.remove('active');
+            }
+            updateChartData();
+        }
+
+        function updateChartData() {
+            const monthsNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            if(currentChartMode === 'monthly') {
+                let counts = new Array(12).fill(0);
+                clientsList.forEach(c => {
+                    let d = c.lastUpdate ? new Date(c.lastUpdate) : new Date();
+                    if (!isNaN(d.getTime())) { counts[d.getMonth()]++; }
+                });
+                attendanceChart.data.labels = monthsNames;
+                attendanceChart.data.datasets[0].data = counts;
+            } else {
+                let yearsCount = {};
+                clientsList.forEach(c => {
+                    let d = c.lastUpdate ? new Date(c.lastUpdate) : new Date();
+                    let y = !isNaN(d.getTime()) ? d.getFullYear() : 2026;
+                    yearsCount[y] = (yearsCount[y] || 0) + 1;
+                });
+                let years = Object.keys(yearsCount).sort();
+                if(years.length === 0) years = [2026];
+                attendanceChart.data.labels = years;
+                attendanceChart.data.datasets[0].data = years.map(y => yearsCount[y]);
+            }
+            attendanceChart.update();
+        }
+
+        function renderTableAndSelect(filteredList = null) {
+            const tbody = document.getElementById('clientTableBody');
+            const select = document.getElementById('selectClient');
+            tbody.innerHTML = '';
+            select.innerHTML = '<option value="">-- Selecione um cliente --</option>';
+            
+            const listToUse = filteredList || clientsList;
+            
+            listToUse.forEach((client) => {
+                const index = clientsList.findIndex(c => c.id === client.id);
+                const dates = getClientCardDates(client);
+
+                let daysBadge = `<span class="badge-dates">Atu: ${dates.updatedFormatted}<br>Venc: ${dates.expiryFormatted}<br>⏳ <b>${dates.daysLeft} dias restantes</b></span>`;
+                if (dates.daysLeft < 0) {
+                    daysBadge = `<span class="badge-expired">Vencido (${Math.abs(dates.daysLeft)} dias atrás)</span>`;
+                } else if (dates.daysLeft === 0) {
+                    daysBadge = `<span class="badge-expired">Vence hoje!</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${client.id}</td>
+                    <td>${client.name}</td>
+                    <td>${client.phone || '-'}</td>
+                    <td><span class="badge-ref">${client.ref || 'Direto'}</span></td>
+                    <td style="font-weight: bold; color: #ff9800;">${client.points}p</td>
+                    <td>${daysBadge}</td>
+                    <td style="color: #ff9800; font-size: 11px; font-weight: bold;">${client.finance || '-'}</td>
+                    <td><button class="btn-notes" onclick="selectClientByIndex(${index})">Gerenciar</button></td>
+                `;
+                tbody.appendChild(tr);
+
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.text = `[${client.id}] ${client.name} (${client.points} pts - ${dates.daysLeft}d restantes)`;
+                select.appendChild(opt);
+            });
+            document.getElementById('totalClientsCount').innerText = clientsList.length;
+            persistData();
+        }
+
+        function filterClientByName() {
+            const query = document.getElementById('searchClientInput').value.toLowerCase().trim();
+            if (!query) { renderTableAndSelect(); return; }
+            const filtered = clientsList.filter(c => 
+                c.name.toLowerCase().includes(query) || (c.phone && c.phone.includes(query))
+            );
+            renderTableAndSelect(filtered);
+            if (filtered.length > 0) {
+                const realIndex = clientsList.findIndex(c => c.id === filtered[0].id);
+                selectClientByIndex(realIndex);
+            }
+        }
+
+        let currentIndex = 0;
+        function selectClientByIndex(index) {
+            currentIndex = index;
+            const c = clientsList[index];
+            document.getElementById('selectClient').value = index;
+            document.getElementById('clientId').value = c.id;
+            document.getElementById('clientName').value = c.name;
+            document.getElementById('clientPhone').value = c.phone;
+            document.getElementById('referredBy').value = c.ref;
+            document.getElementById('validityDays').value = c.days || 60;
+            document.getElementById('clientFinanceNotes').value = c.finance || '';
+            document.getElementById('clientNotes').value = c.notes || '';
+
+            const dates = getClientCardDates(c);
+            document.getElementById('previewId').innerText = c.id;
+            document.getElementById('previewName').innerText = c.name;
+            document.getElementById('previewPhone').innerText = c.phone ? `📱 ${c.phone}` : 'Sem telefone';
+            document.getElementById('previewPoints').innerText = `${c.points} pts`;
+            
+            let daysBadgeText = `${dates.daysLeft} dias restantes`;
+            if (dates.daysLeft < 0) daysBadgeText = `Vencido há ${Math.abs(dates.daysLeft)} dias`;
+            else if (dates.daysLeft === 0) daysBadgeText = `Vence hoje!`;
+
+            document.getElementById('previewDatesText').innerHTML = `📅 Atualizado em: ${dates.updatedFormatted} | Válido até: ${dates.expiryFormatted} <br>(⏳ <b>${daysBadgeText}</b>)`;
+            document.getElementById('previewFinance').innerHTML = `💰 Financeiro: ${c.finance || 'Nenhuma anotação financeira registrada.'}`;
+            renderRouletteStatus();
+        }
+
+        function loadClientFromSelect() {
+            const index = document.getElementById('selectClient').value;
+            if (index !== "") { selectClientByIndex(parseInt(index)); }
+        }
+
+        function addPoints(pts) {
+            if(clientsList.length > 0) {
+                clientsList[currentIndex].name = document.getElementById('clientName').value || clientsList[currentIndex].name;
+                clientsList[currentIndex].points = Math.max(0, clientsList[currentIndex].points + pts);
+                clientsList[currentIndex].lastUpdate = new Date().toISOString(); 
+                renderTableAndSelect();
+                selectClientByIndex(currentIndex);
+            }
+        }
+
+        function resetPoints() {
+            if(clientsList.length > 0) {
+                clientsList[currentIndex].points = 0;
+                clientsList[currentIndex].lastUpdate = new Date().toISOString();
+                renderTableAndSelect();
+                selectClientByIndex(currentIndex);
+            }
+        }
+
+        function adjustDays(days) {
+            if(clientsList.length > 0) {
+                clientsList[currentIndex].days = Math.max(0, (clientsList[currentIndex].days || 60) + days);
+                document.getElementById('validityDays').value = clientsList[currentIndex].days;
+                renderTableAndSelect();
+                selectClientByIndex(currentIndex);
+            }
+        }
+
+        function saveValidityDays() {
+            if(clientsList.length > 0) {
+                const val = parseInt(document.getElementById('validityDays').value) || 60;
+                clientsList[currentIndex].days = val;
+                clientsList[currentIndex].lastUpdate = new Date().toISOString();
+                renderTableAndSelect();
+                alert("Validade de " + val + " dias fixada!");
+            }
+        }
+
+        function saveClient() {
+            if(clientsList.length > 0) {
+                clientsList[currentIndex].name = document.getElementById('clientName').value;
+                clientsList[currentIndex].phone = document.getElementById('clientPhone').value;
+                clientsList[currentIndex].ref = document.getElementById('referredBy').value || 'Direto';
+                clientsList[currentIndex].finance = document.getElementById('clientFinanceNotes').value;
+                clientsList[currentIndex].notes = document.getElementById('clientNotes').value;
+                clientsList[currentIndex].days = parseInt(document.getElementById('validityDays').value) || 60;
+                renderTableAndSelect();
+                selectClientByIndex(currentIndex);
+                alert("Dados salvos com sucesso!");
+            }
+        }
+
+        function deleteClient() {
+            if(clientsList.length > 1) {
+                if(confirm("Deseja realmente eliminar este cliente?")) {
+                    clientsList.splice(currentIndex, 1);
+                    currentIndex = 0;
+                    renderTableAndSelect();
+                    selectClientByIndex(0);
+                    alert("Cliente removido.");
+                }
+            } else { alert("Você não pode excluir o último cliente restante."); }
+        }
+
+        function addNewClientPrompt() {
+            const name = prompt("Digite o nome do novo cliente:");
+            if(name) {
+                const phone = prompt("Digite o WhatsApp com DDD:", "119");
+                const ref = prompt("Quem indicou?") || "Direto";
+                const newId = "AG-100" + (clientsList.length + 1);
+                clientsList.push({ id: newId, name: name, phone: phone || "", ref: ref, points: 0, days: 60, lastUpdate: new Date().toISOString(), finance: "", notes: "" });
+                renderTableAndSelect();
+                selectClientByIndex(clientsList.length - 1);
+                alert("Novo cliente cadastrado!");
+            }
+        }
+
+        function sendWhatsApp() {
+            if(clientsList.length > 0) {
+                const currentName = document.getElementById('clientName').value || clientsList[currentIndex].name;
+                const c = clientsList[currentIndex];
+                const phoneInput = document.getElementById('clientPhone').value || c.phone;
+                if (!phoneInput) { alert("Este cliente não possui WhatsApp cadastrado!"); return; }
+                let phoneClean = phoneInput.replace(/\D/g, '');
+                if (!phoneClean.startsWith('55')) { phoneClean = '55' + phoneClean; }
+                
+                const baseUrl = window.location.href.replace('admin.html', 'index.html');
+                let fullLink = `${baseUrl}?nome=${encodeURIComponent(currentName)}&id=${c.id}&pontos=${c.points}&dias=${c.days || 60}&data=${encodeURIComponent(c.lastUpdate)}`;
+                let msg = `Olá ${currentName}! 🔥 Seu Cartão Fidelidade no Assaê Grill e Gula está com ${c.points} pontos! A cada 10 pontos você ganha 1 Frango Assado Grátis! Acompanhe seu cartão por aqui: ${fullLink}`;
+                if (c.roulette) {
+                    fullLink += `&giro=${encodeURIComponent(btoa(c.roulette.code + '-' + c.roulette.idx))}`;
+                    msg = `Olá ${currentName}! 🔥 Seu Cartão Fidelidade no Assaê Grill e Gula está com ${c.points} pontos! 🎰 E você ganhou 1 GIRO na Roleta da Sorte! Abra seu cartão, gire e veja seu prêmio: ${fullLink}`;
+                }
+                const waUrl = `https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodeURIComponent(msg)}`;
+                window.open(waUrl, '_blank');
+            }
+        }
+
+        function exportToExcelXLSX() {
+            let dataExport = clientsList.map(c => {
+                let dates = getClientCardDates(c);
+                return {
+                    "ID": c.id,
+                    "Nome": c.name,
+                    "WhatsApp": c.phone,
+                    "Indicada Por": c.ref,
+                    "Pontos": c.points,
+                    "Atualizado em": dates.updatedFormatted,
+                    "Válido até": dates.expiryFormatted,
+                    "Dias Restantes": dates.daysLeft,
+                    "Financeiro": c.finance || '',
+                    "Anotações": c.notes || '',
+                    "Roleta (pendente)": c.roulette ? `${ROULETTE_PRIZES[c.roulette.idx].full} - ${c.roulette.code}` : ''
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(dataExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes_Assae");
+            XLSX.writeFile(workbook, `Assae_Grill_Clientes_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    let imported = [];
+                    for (let i = 1; i < jsonRows.length; i++) {
+                        const cols = jsonRows[i];
+                        if (!cols || cols.length === 0) continue;
+                        let id = `AG-100${i}`;
+                        let name = cols[1] || `Cliente ${i}`;
+                        let phone = String(cols[2] || '').replace(/\D/g, '');
+                        let ref = cols[3] || 'Direto';
+                        let points = parseInt(cols[4]) || 0;
+                        
+                        imported.push({ 
+                            id: id, name: name, phone: phone, ref: ref, points: points, 
+                            days: 60, lastUpdate: new Date().toISOString(), finance: cols[7] || '', notes: cols[8] || '' 
+                        });
+                    }
+                    if(imported.length > 0) {
+                        clientsList = imported;
+                        renderTableAndSelect();
+                        selectClientByIndex(0);
+                        alert(`Sucesso! ${imported.length} clientes importados!`);
+                    }
+                } catch (error) { alert("Erro ao ler o arquivo XLSX."); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ================= ROLETA DA SORTE =================
+        // O prêmio é sorteado AQUI no painel (não no celular do cliente).
+        // O cartão só mostra a animação e o resultado; quem vale é o que está registrado aqui.
+        // ATENÇÃO: esta lista deve ser IGUAL (mesma ordem) à do index.html.
+        // "weight" = chance de sair (quanto maior, mais sai). A soma atual é 100, então weight = %.
+        const ROULETTE_PRIZES = [
+            { label: "+1 ponto",       full: "+1 ponto no cartão",              type: "pontos",   value: 1, weight: 30, color: "#ff5722" },
+            { label: "Refri grátis",   full: "1 Refrigerante lata grátis",      type: "premio",   value: 0, weight: 12, color: "#1a1d26" },
+            { label: "+2 pontos",      full: "+2 pontos no cartão",             type: "pontos",   value: 2, weight: 20, color: "#ff9800" },
+            { label: "5% OFF frango",  full: "5% de desconto no Frango Assado", type: "desconto", value: 5, weight: 15, color: "#2a2e3d" },
+            { label: "Acomp. grátis",  full: "1 Acompanhamento grátis",         type: "premio",   value: 0, weight: 8,  color: "#ff5722" },
+            { label: "+3 pontos",      full: "+3 pontos no cartão",             type: "pontos",   value: 3, weight: 8,  color: "#1a1d26" },
+            { label: "10% OFF frango", full: "10% de desconto no Frango Assado",type: "desconto", value: 10, weight: 6, color: "#ff9800" },
+            { label: "Frango grátis",  full: "1 Frango Assado GRÁTIS",          type: "premio",   value: 0, weight: 1,  color: "#2a2e3d" }
+        ];
+
+        function drawRoulettePrize() {
+            const total = ROULETTE_PRIZES.reduce((s, p) => s + p.weight, 0);
+            const buf = new Uint32Array(1);
+            crypto.getRandomValues(buf);
+            let r = buf[0] / 4294967296 * total;
+            for (let i = 0; i < ROULETTE_PRIZES.length; i++) {
+                r -= ROULETTE_PRIZES[i].weight;
+                if (r < 0) return i;
+            }
+            return ROULETTE_PRIZES.length - 1;
+        }
+
+        function randomSpinCode() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            const buf = new Uint8Array(4);
+            crypto.getRandomValues(buf);
+            return Array.from(buf).map(v => chars[v % chars.length]).join('');
+        }
+
+        function getPendingSpin(c) {
+            if (!c || !c.roulette || !ROULETTE_PRIZES[c.roulette.idx]) return null;
+            return c.roulette;
+        }
+
+        function renderRouletteStatus() {
+            const el = document.getElementById('rouletteStatus');
+            const spin = getPendingSpin(clientsList[currentIndex]);
+            if (!spin) { el.innerHTML = 'Nenhum giro liberado para este cliente.'; return; }
+            const p = ROULETTE_PRIZES[spin.idx];
+            el.innerHTML = `Giro liberado em ${formatDate(new Date(spin.date))}.<br>Prêmio sorteado: <b>${p.full}</b><br>Código: <span class="roulette-code">${spin.code}</span> (aguardando o cliente resgatar)`;
+        }
+
+        function grantSpin() {
+            if (clientsList.length === 0) return;
+            const c = clientsList[currentIndex];
+            if (getPendingSpin(c) && !confirm("Este cliente já tem um giro pendente. Substituir por um novo sorteio?")) return;
+            c.roulette = { idx: drawRoulettePrize(), code: randomSpinCode(), date: new Date().toISOString() };
+            renderTableAndSelect();
+            selectClientByIndex(currentIndex);
+            alert('Giro liberado! Agora toque em "Enviar Cartão para WhatsApp do Cliente" para ele girar a roleta.');
+        }
+
+        function confirmPrize() {
+            if (clientsList.length === 0) return;
+            const c = clientsList[currentIndex];
+            const spin = getPendingSpin(c);
+            if (!spin) { alert("Nenhum giro pendente para este cliente."); return; }
+            const p = ROULETTE_PRIZES[spin.idx];
+            if (!confirm(`Confirmar a entrega do prêmio "${p.full}" (código ${spin.code})?`)) return;
+            if (p.type === 'pontos') {
+                c.points = c.points + p.value;
+                c.lastUpdate = new Date().toISOString();
+            }
+            const stamp = formatDate(new Date()).slice(0, 5);
+            c.notes = ((c.notes || '') + ` [Roleta ${stamp}: ${p.full} - cód. ${spin.code}]`).trim();
+            c.roulette = null;
+            renderTableAndSelect();
+            selectClientByIndex(currentIndex);
+            alert(p.type === 'pontos' ? `${p.value} ponto(s) somado(s) ao cartão!` : "Prêmio entregue e registrado nas observações do cliente.");
+        }
+
+        function cancelSpin() {
+            if (clientsList.length === 0) return;
+            const c = clientsList[currentIndex];
+            if (!getPendingSpin(c)) { alert("Nenhum giro pendente para este cliente."); return; }
+            if (!confirm("Cancelar o giro pendente deste cliente?")) return;
+            c.roulette = null;
+            renderTableAndSelect();
+            selectClientByIndex(currentIndex);
+        }
+
+        renderTableAndSelect();
+        selectClientByIndex(0);
+        
+        // Verifica o status da licença ao carregar a página
+        checkLicenseStatus();
+    </script>
+</body>
+</html>
