@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartão Fidelidade Digital - Assaê Grill e Gula</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background-color: #0A0A0A; color: #FFFFFF; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 12px; }
+        .card-container { width: 100%; max-width: 420px; background: #14161d; border-radius: 20px; padding: 20px; border: 2px solid #ff5722; box-shadow: 0 10px 30px rgba(255, 87, 34, 0.2); text-align: center; }
+        .brand-title { color: #ff5722; font-size: 20px; font-weight: 800; margin-bottom: 2px; letter-spacing: 0.5px; }
+        .brand-subtitle { font-size: 11px; color: #a0a6b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; font-weight: 600; }
+        
+        .welcome-box { background: linear-gradient(135deg, #1a1d26 0%, #101217 100%); border: 1px solid #ff5722; border-radius: 14px; padding: 16px; margin-bottom: 16px; position: relative; }
+        .welcome-box h2 { font-size: 16px; color: #ff5722; margin-bottom: 6px; }
+        .welcome-box p { font-size: 12px; color: #ffffff; line-height: 1.4; }
+        
+        .points-display { font-size: 22px; font-weight: 800; color: #0A0A0A; margin: 10px 0 6px 0; background: linear-gradient(135deg, #ff9800, #ff5722); padding: 10px; border-radius: 12px; border: 1px solid #ff5722; box-shadow: 0 0 10px rgba(255, 87, 34, 0.3); }
+        .dates-info { font-size: 10px; color: #00d2d3; margin-top: 6px; font-weight: 600; }
+
+        .stamps-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
+        .stamp { aspect-ratio: 1; background: #1a1d26; border: 2px solid #2a2e3d; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; color: #a0a6b8; position: relative; transition: all 0.3s ease; padding: 4px; text-align: center; }
+        .stamp.filled { background: #14161d; border: 2px solid #ff5722; color: #ffffff; box-shadow: 0 0 8px rgba(255, 87, 34, 0.4); }
+        .stamp-value { font-size: 13px; font-weight: 800; color: #ff9800; }
+        .stamp-label { font-size: 8px; color: #ffffff; margin-top: 1px; line-height: 1; }
+        .stamp-date { font-size: 8px; color: #00d2d3; margin-top: 2px; font-weight: 600; }
+        .stamp.empty { font-size: 14px; color: #a0a6b8; }
+
+        .total-box { background: linear-gradient(135deg, #ff9800, #ff5722); border-radius: 12px; padding: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; color: #0A0A0A; font-weight: 800; }
+        .total-box span { font-size: 13px; text-transform: uppercase; }
+        .total-box strong { font-size: 18px; }
+
+        .info-card { background: #1a1d26; border: 1px solid #232733; border-radius: 12px; padding: 12px; margin-bottom: 16px; text-align: left; font-size: 11px; color: #a0a6b8; line-height: 1.5; }
+        .info-card strong { color: #ffffff; display: block; margin-bottom: 2px; }
+
+        .action-btn { width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer; border: none; text-decoration: none; display: block; margin-bottom: 10px; text-align: center; transition: opacity 0.2s; }
+        .action-btn:hover { opacity: 0.9; }
+        .btn-whatsapp { background: #00C853; color: #ffffff; }
+        .btn-referral { background: linear-gradient(135deg, #00A8E8, #007EA7); color: #ffffff; }
+        /* Roleta da Sorte */
+        .roulette-card { background: linear-gradient(135deg, #1a1d26 0%, #101217 100%); border: 1px solid #ff5722; border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+        .roulette-title { color: #ff5722; font-size: 15px; font-weight: 800; }
+        .roulette-sub { font-size: 11px; color: #a0a6b8; margin: 2px 0 14px 0; }
+        .wheel-wrap { position: relative; width: 100%; max-width: 290px; aspect-ratio: 1; margin: 0 auto 14px auto; }
+        #wheelCanvas { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 0 0 5px #ff9800, 0 0 18px rgba(255, 87, 34, 0.5); transition: transform 5s cubic-bezier(0.12, 0.62, 0.08, 1); }
+        @media (prefers-reduced-motion: reduce) { #wheelCanvas { transition-duration: 0.6s; } }
+        .wheel-pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 26px solid #ffffff; z-index: 2; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6)); }
+        .wheel-hub { position: absolute; top: 50%; left: 50%; width: 17%; height: 17%; transform: translate(-50%, -50%); border-radius: 50%; background: #14161d; border: 3px solid #ff9800; z-index: 1; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .btn-spin { background: linear-gradient(135deg, #ff9800, #ff5722); color: #0A0A0A; font-size: 15px; font-weight: 800; margin-bottom: 0; }
+        .btn-spin:disabled { background: #2a2e3d; color: #a0a6b8; cursor: not-allowed; opacity: 1; }
+        .prize-result { display: none; margin-top: 12px; background: #14161d; border: 2px dashed #ff9800; border-radius: 12px; padding: 12px; }
+        .prize-result .prize-name { font-size: 16px; font-weight: 800; color: #ff9800; margin: 4px 0; }
+        .prize-result .prize-code { display: inline-block; background: #0A0A0A; color: #ffffff; font-weight: 800; letter-spacing: 3px; padding: 4px 12px; border-radius: 8px; margin: 4px 0 10px 0; }
+        .prize-result p { font-size: 11px; color: #a0a6b8; }
+
+        .footer-tip { font-size: 10px; color: #a0a6b8; margin-top: 8px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+        <div class="brand-title">🔥 Assaê Grill e Gula 🔥</div>
+        <div class="brand-subtitle">Cartão Fidelidade Digital</div>
+
+        <div class="welcome-box">
+            <h2 id="clientGreeting">Olá, Cliente! 👋</h2>
+            <p id="recentActivityText">Junte pontos a cada compra de combos e assados 🍗</p>
+            <div class="points-display" id="pointsDisplay">0 pontos 🍗</div>
+            <div class="dates-info" id="datesDisplay">Atualizado em: --/--/---- - Válido até: --/--/----</div>
+        </div>
+
+        <div class="stamps-grid" id="stampsGrid"></div>
+
+        <div class="total-box">
+            <span>Total Acumulado</span>
+            <strong id="totalPointsText">0 PTS</strong>
+        </div>
+
+        <!-- Roleta da Sorte -->
+        <div class="roulette-card">
+            <div class="roulette-title">🎰 Roleta da Sorte</div>
+            <div class="roulette-sub" id="rouletteSub">Ganhe pontos, descontos e prêmios!</div>
+            <div class="wheel-wrap">
+                <div class="wheel-pointer"></div>
+                <canvas id="wheelCanvas" width="600" height="600"></canvas>
+                <div class="wheel-hub">🍗</div>
+            </div>
+            <button id="spinBtn" class="action-btn btn-spin" onclick="spinWheel()" disabled>Peça seu giro na próxima compra</button>
+            <div class="prize-result" id="prizeResult">
+                <p>🎉 Você ganhou:</p>
+                <div class="prize-name" id="prizeName"></div>
+                <div class="prize-code" id="prizeCode"></div>
+                <a id="redeemBtn" href="#" target="_blank" class="action-btn btn-whatsapp" style="margin-bottom: 6px;">📲 Resgatar pelo WhatsApp</a>
+                <p>Envie o código para a loja para validar seu prêmio.</p>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <strong>📍 Endereço da Loja:</strong>
+            Rua Conde de Avintes, 287 - São Paulo - SP
+            <br><br>
+            <strong>🎁 Regra do Cartão:</strong>
+            A cada 10 pontos acumulados, você ganha <b>1 Frango Assado Grátis</b>! (Validade: <span id="validityDaysText">60</span> dias)
+            <br><br>
+            <strong>🎰 Roleta da Sorte:</strong>
+            Quando a loja liberar um giro, a roleta aparece ativa no seu cartão. Cada giro vale uma vez e o prêmio é validado pelo código.
+        </div>
+
+        <!-- Botão de Pedidos / WhatsApp da Loja -->
+        <a id="whatsappBtn" href="#" target="_blank" class="action-btn btn-whatsapp">
+            🍗 Faça seu Pedido: (11) 98415-9811
+        </a>
+
+        <!-- Botão de Indicação -->
+        <button onclick="shareReferral()" class="action-btn btn-referral">
+            🎁 Indique um amigo e ganhe pontos!
+        </button>
+
+        <div class="footer-tip">Toque nos botões acima para pedir ou indicar</div>
+    </div>
+
+    <script>
+        function formatDate(dateObj) {
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            return `${day}/${month}`;
+        }
+
+        function formatFullDate(dateObj) {
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientName = urlParams.get('nome') || 'Cliente';
+        const clientId = urlParams.get('id') || 'AG-1001';
+        const points = parseInt(urlParams.get('pontos')) || 0;
+        const validityDays = parseInt(urlParams.get('dias')) || 60;
+
+        document.getElementById('clientGreeting').innerText = `Olá, ${clientName}! 👋`;
+        document.getElementById('pointsDisplay').innerText = `${points} pontos 🍗`;
+        document.getElementById('totalPointsText').innerText = `${points} PTS`;
+        document.getElementById('validityDaysText').innerText = validityDays;
+
+        // Data da última atualização enviada pelo painel (parâmetro "data" do link)
+        let updateDate = new Date(urlParams.get('data') || '');
+        if (isNaN(updateDate.getTime()) || updateDate.getFullYear() > 2030 || updateDate.getFullYear() < 2024) {
+            updateDate = new Date(); // link antigo ou sem data: usa hoje
+        }
+        const expiryDate = new Date(updateDate.getTime() + (validityDays * 24 * 60 * 60 * 1000));
+        document.getElementById('datesDisplay').innerText = `Atualizado em ${formatFullDate(updateDate)} - Válido até ${formatFullDate(expiryDate)}`;
+
+        const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+        if (daysLeft < 0) {
+            document.getElementById('datesDisplay').innerText = `Atualizado em ${formatFullDate(updateDate)} - Vencido em ${formatFullDate(expiryDate)}`;
+            document.getElementById('datesDisplay').style.color = '#ff6b6b';
+        }
+
+        if (points > 0) {
+            document.getElementById('recentActivityText').innerText = `Você ganhou pontos em ${formatDate(updateDate)} 🔥`;
+        }
+
+        // WhatsApp do Assaê Grill e Gula
+        const storePhone = "5511984159811";
+        const orderMsg = encodeURIComponent(`Olá! Vim pelo meu Cartão Fidelidade (${clientId}) do Assaê Grill e Gula e gostaria de fazer um pedido.`);
+        document.getElementById('whatsappBtn').href = `https://api.whatsapp.com/send?phone=${storePhone}&text=${orderMsg}`;
+
+        // Renderizar os 10 selos
+        const grid = document.getElementById('stampsGrid');
+        let historyEntries = [];
+        let ptsLeft = points;
+
+        while (ptsLeft > 0) {
+            let chunk = ptsLeft >= 5 ? 5 : (ptsLeft >= 3 ? 3 : ptsLeft);
+            historyEntries.push({
+                val: `+${chunk}`,
+                date: formatDate(updateDate)
+            });
+            ptsLeft -= chunk;
+        }
+
+        for (let i = 1; i <= 10; i++) {
+            const stamp = document.createElement('div');
+            
+            if (i <= historyEntries.length) {
+                stamp.className = 'stamp filled';
+                stamp.innerHTML = `
+                    <div class="stamp-value">${historyEntries[i-1].val}</div>
+                    <div class="stamp-label">🔥 Combo</div>
+                    <div class="stamp-date">${historyEntries[i-1].date}</div>
+                `;
+            } else {
+                stamp.className = 'stamp empty';
+                stamp.innerHTML = i;
+            }
+            grid.appendChild(stamp);
+        }
+
+        // ================= ROLETA DA SORTE =================
+        // ATENÇÃO: esta lista deve ser IGUAL (mesma ordem) à do admin.html.
+        // O prêmio é sorteado no painel da loja; aqui a roleta só anima e mostra o resultado.
+        const ROULETTE_PRIZES = [
+            { label: "+1 ponto",       full: "+1 ponto no cartão",              type: "pontos",   value: 1, weight: 30, color: "#ff5722" },
+            { label: "Refri grátis",   full: "1 Refrigerante lata grátis",      type: "premio",   value: 0, weight: 12, color: "#1a1d26" },
+            { label: "+2 pontos",      full: "+2 pontos no cartão",             type: "pontos",   value: 2, weight: 20, color: "#ff9800" },
+            { label: "5% OFF frango",  full: "5% de desconto no Frango Assado", type: "desconto", value: 5, weight: 15, color: "#2a2e3d" },
+            { label: "Acomp. grátis",  full: "1 Acompanhamento grátis",         type: "premio",   value: 0, weight: 8,  color: "#ff5722" },
+            { label: "+3 pontos",      full: "+3 pontos no cartão",             type: "pontos",   value: 3, weight: 8,  color: "#1a1d26" },
+            { label: "10% OFF frango", full: "10% de desconto no Frango Assado",type: "desconto", value: 10, weight: 6, color: "#ff9800" },
+            { label: "Frango grátis",  full: "1 Frango Assado GRÁTIS",          type: "premio",   value: 0, weight: 1,  color: "#2a2e3d" }
+        ];
+
+        const wheelCanvas = document.getElementById('wheelCanvas');
+        const SLICE = 2 * Math.PI / ROULETTE_PRIZES.length;
+        let wheelRotation = 0;
+        let isSpinning = false;
+        let spinData = null; // { code, idx }
+
+        function drawWheel() {
+            const c = wheelCanvas.getContext('2d');
+            const R = wheelCanvas.width / 2;
+            c.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+            ROULETTE_PRIZES.forEach((p, i) => {
+                c.beginPath();
+                c.moveTo(R, R);
+                c.arc(R, R, R, i * SLICE, (i + 1) * SLICE);
+                c.closePath();
+                c.fillStyle = p.color;
+                c.fill();
+                c.strokeStyle = '#0A0A0A';
+                c.lineWidth = 4;
+                c.stroke();
+                c.save();
+                c.translate(R, R);
+                c.rotate(i * SLICE + SLICE / 2);
+                c.textAlign = 'right';
+                c.textBaseline = 'middle';
+                c.fillStyle = (p.color === '#ff9800' || p.color === '#ff5722') ? '#0A0A0A' : '#ffffff';
+                c.font = '800 27px Poppins, sans-serif';
+                c.fillText(p.label, R - 22, 0, R * 0.62);
+                c.restore();
+            });
+        }
+
+        function targetRotation(idx, jitter) {
+            // ângulo que deixa o centro da fatia "idx" embaixo do ponteiro (topo)
+            return -Math.PI / 2 - (idx + 0.5) * SLICE + jitter;
+        }
+
+        function spinKey() { return `assae_giro_${clientId}_${spinData.code}`; }
+        function wasSpun() { try { return localStorage.getItem(spinKey()) === '1'; } catch (e) { return false; } }
+        function markSpun() { try { localStorage.setItem(spinKey(), '1'); } catch (e) {} }
+
+        function showPrize() {
+            const p = ROULETTE_PRIZES[spinData.idx];
+            document.getElementById('prizeName').innerText = p.full;
+            document.getElementById('prizeCode').innerText = spinData.code;
+            const redeemMsg = encodeURIComponent(`Olá! Girei a Roleta da Sorte do meu Cartão Fidelidade (${clientId}) do Assaê Grill e Gula e ganhei: ${p.full}. Código: ${spinData.code}`);
+            document.getElementById('redeemBtn').href = `https://api.whatsapp.com/send?phone=${storePhone}&text=${redeemMsg}`;
+            document.getElementById('prizeResult').style.display = 'block';
+            document.getElementById('rouletteSub').innerText = 'Giro utilizado — resgate seu prêmio abaixo.';
+            const btn = document.getElementById('spinBtn');
+            btn.disabled = true;
+            btn.innerText = 'Giro já utilizado ✅';
+        }
+
+        function spinWheel() {
+            if (isSpinning || !spinData || wasSpun()) return;
+            isSpinning = true;
+            markSpun();
+            const btn = document.getElementById('spinBtn');
+            btn.disabled = true;
+            btn.innerText = 'Girando... 🤞';
+            const TAU = 2 * Math.PI;
+            const target = targetRotation(spinData.idx, (Math.random() - 0.5) * SLICE * 0.7);
+            const delta = (((target - wheelRotation) % TAU) + TAU) % TAU + TAU * 6;
+            wheelRotation += delta;
+            wheelCanvas.style.transform = `rotate(${wheelRotation}rad)`;
+        }
+
+        wheelCanvas.addEventListener('transitionend', function () {
+            if (!isSpinning) return;
+            isSpinning = false;
+            showPrize();
+        });
+
+        function initRoulette() {
+            drawWheel();
+            if (document.fonts && document.fonts.ready) { document.fonts.ready.then(drawWheel); }
+            const raw = urlParams.get('giro');
+            if (!raw) return;
+            try {
+                const parts = atob(raw).split('-');
+                const idx = parseInt(parts[1]);
+                if (/^[A-Z0-9]{4}$/.test(parts[0]) && idx >= 0 && idx < ROULETTE_PRIZES.length) {
+                    spinData = { code: parts[0], idx: idx };
+                }
+            } catch (e) {}
+            if (!spinData) return;
+
+            if (wasSpun()) {
+                // já girou neste aparelho: mostra direto o prêmio, sem girar de novo
+                wheelCanvas.style.transition = 'none';
+                wheelRotation = targetRotation(spinData.idx, 0);
+                wheelCanvas.style.transform = `rotate(${wheelRotation}rad)`;
+                showPrize();
+            } else {
+                document.getElementById('rouletteSub').innerText = '🎉 Você tem 1 giro disponível!';
+                const btn = document.getElementById('spinBtn');
+                btn.disabled = false;
+                btn.innerText = '🎰 GIRAR A ROLETA';
+            }
+        }
+        initRoulette();
+
+        function shareReferral() {
+            const currentUrl = window.location.href.split('?')[0];
+            const refLink = `${currentUrl}?ref=${clientId}`;
+            const shareText = encodeURIComponent(`Olá! Conheça o Assaê Grill e Gula e faça seu Cartão Fidelidade digital! Peça os melhores frangos e combos e ganhe recompensas: ${refLink}`);
+            window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
+        }
+    </script>
+</body>
+</html>
