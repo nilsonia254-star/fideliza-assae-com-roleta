@@ -1,0 +1,1 @@
+# fideliza-assae-com-roleta
